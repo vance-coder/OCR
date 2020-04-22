@@ -2,14 +2,18 @@ import pytesseract
 from PIL import Image
 
 """
-tesseract delete alpha channel
+tesseract delete alpha channel 
 the best dpi for tesseract is at lest 300dpi
-image.convert("L")  
+image.convert("L")  Done 
 """
 
 
 def demo():
-    image = Image.open('/Users/liuliangjun/Downloads/test2.jpg')
+    image = Image.open('/Users/liuliangjun/Downloads/pic_3.png')
+    w, h = image.size
+    factor = 30 / min(image.size)
+    if factor > 1:
+        image = image.resize((int(w * factor), int(h * factor)))
 
     # default config --oem 3 --psm 3
     text = pytesseract.image_to_string(image, config='-l eng+chi_sim --oem 3 --psm 3')

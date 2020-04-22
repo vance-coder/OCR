@@ -2,6 +2,7 @@
 ##添加文本方向 检测模型，自动检测文字方向，0、90、180、270
 import sys
 from math import *
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 import cv2
 import pytesseract
@@ -10,6 +11,10 @@ from PIL import Image
 
 from angle.predict import predict as angle_detect  ##文字方向检测
 from ctpn.text_detect import text_detect
+
+
+def img_to_string(image):
+    return pytesseract.image_to_string(image, config='-l eng+chi_sim --oem 3 --psm 3')
 
 
 def crnnRec(im, text_recs, ocrMode='keras', adjust=False):
@@ -21,7 +26,7 @@ def crnnRec(im, text_recs, ocrMode='keras', adjust=False):
     @@text_recs:text box
 
     """
-    index = 0
+    images = []
     results = {}
     xDim, yDim = im.shape[1], im.shape[0]
 
@@ -43,16 +48,30 @@ def crnnRec(im, text_recs, ocrMode='keras', adjust=False):
             pt3 = (min(rec[6], xDim - 2), min(yDim - 2, rec[7]))
             pt4 = (rec[4], rec[5])
 
-        degree = degrees(atan2(pt2[1] - pt1[1], pt2[0] - pt1[0]))  ##图像倾斜角度
+        degree = degrees(atan2(pt2[1] - pt1[1], pt2[0] - pt1[0]))  # 图像倾斜角度
 
         partImg = dumpRotateImage(im, degree, pt1, pt2, pt3, pt4)
         # 根据ctpn进行识别出的文字区域，进行不同文字区域的crnn识别
         image = Image.fromarray(partImg).convert('L')
+
+        # 图片的长宽如果小于30px，则按比例放大
+        w, h = image.size
+        factor = 30 / min(image.size)
+        if factor > 1:
+            print('turn size...')
+            image = image.resize((int(w * factor), int(h * factor)))
+
+        images.append(image)
         # image.save(f'./temp/{index}.png')
 
         # 进行识别出的文字识别
-        sim_pred = pytesseract.image_to_string(image, config='-l eng+chi_sim --oem 3 --psm 3')
-        results[index].append(sim_pred)
+        # sim_pred = pytesseract.image_to_string(image, config='-l eng+chi_sim --oem 3 --psm 3')
+        # results[index].append(sim_pred)
+
+    with ProcessPoolExecutor() as executor:
+        res = [executor.submit(img_to_string, img) for img in images]
+    for idx, r in enumerate(res):
+        results[idx].append(r.result())
 
     return results
 

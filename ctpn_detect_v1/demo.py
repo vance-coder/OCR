@@ -22,7 +22,7 @@ def demo():
     '''
     result, img, angle = model.model(
         img, model='crnn', adjust=True, detectAngle=True)
-    print(result, img, angle)
+    # print(result, img, angle)
     print("It takes time:{}s".format(time.time() - t))
     print("---------------------------------------")
     for key in result:
