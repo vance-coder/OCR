@@ -14,7 +14,7 @@ from ctpn.text_detect import text_detect
 
 
 def img_to_string(image):
-    return pytesseract.image_to_string(image, config='-l eng+chi_sim --oem 3 --psm 3')
+    return pytesseract.image_to_string(image, config='-l eng+chi_sim --oem 3 --psm 7')
 
 
 def crnnRec(im, text_recs, ocrMode='keras', adjust=False):
@@ -56,13 +56,13 @@ def crnnRec(im, text_recs, ocrMode='keras', adjust=False):
 
         # 图片的长宽如果小于30px，则按比例放大
         w, h = image.size
+        print(f'idx:{index}, w:{w}, h:{h}')
         factor = 30 / min(image.size)
         if factor > 1:
-            print('turn size...')
-            image = image.resize((int(w * factor), int(h * factor)))
+            image = image.resize((ceil(w * factor), ceil(h * factor)))
 
         images.append(image)
-        # image.save(f'./temp/{index}.png')
+        # image.save(f'./{index}.png')
 
         # 进行识别出的文字识别
         # sim_pred = pytesseract.image_to_string(image, config='-l eng+chi_sim --oem 3 --psm 3')
