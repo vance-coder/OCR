@@ -8,10 +8,10 @@ from PIL import Image
 import model
 
 
-# TODO
 # 运行前需要的配置
 # 1. 修改 angle/predict.py 32行 模型地址
-# 2. 修改 /ctpn/ctpn/model.py 36 行 checkpoint 地址
+# TODO 2. 修改 /ctpn/ctpn/model.py 36 行 checkpoint 地址
+# TODO 3. 覆盖/ctpn_detect_v1/ctpn/lib/utils
 
 def demo():
     im = Image.open("/Users/liuliangjun/Downloads/test2.jpg")
@@ -20,7 +20,7 @@ def demo():
     '''
     result,img,angel分别对应-识别结果，图像的数组，文字旋转角度
     '''
-    result, img, angle = model.model(
+    result, img, text_recs = model.model(
         img, model='crnn', adjust=True, detectAngle=True)
     # print(result, img, angle)
     print("It takes time:{}s".format(time.time() - t))

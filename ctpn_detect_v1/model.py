@@ -9,7 +9,7 @@ import pytesseract
 import numpy as np
 from PIL import Image
 
-from angle.predict import predict as angle_detect  ##文字方向检测
+# from angle.predict import predict as angle_detect  ##文字方向检测
 from ctpn.text_detect import text_detect
 
 
@@ -109,27 +109,27 @@ def model(img, model='keras', adjust=False, detectAngle=False):
     @@param:detectAngle,是否检测文字朝向
     
     """
-    angle = 0
-    if detectAngle:
-        # 进行文字旋转方向检测，分为[0, 90, 180, 270]四种情况
-        angle = angle_detect(img=np.copy(img))  ##文字朝向检测
-        print('The angel of this character is:', angle)
-        im = Image.fromarray(img)
-        print('Rotate the array of this img!')
-        if angle == 90:
-            im = im.transpose(Image.ROTATE_90)
-        elif angle == 180:
-            im = im.transpose(Image.ROTATE_180)
-        elif angle == 270:
-            im = im.transpose(Image.ROTATE_270)
-        img = np.array(im)
+    # angle = 0
+    # if detectAngle:
+    #     # 进行文字旋转方向检测，分为[0, 90, 180, 270]四种情况
+    #     angle = angle_detect(img=np.copy(img))  ##文字朝向检测
+    #     print('The angel of this character is:', angle)
+    #     im = Image.fromarray(img)
+    #     print('Rotate the array of this img!')
+    #     if angle == 90:
+    #         im = im.transpose(Image.ROTATE_90)
+    #     elif angle == 180:
+    #         im = im.transpose(Image.ROTATE_180)
+    #     elif angle == 270:
+    #         im = im.transpose(Image.ROTATE_270)
+    #     img = np.array(im)
     # 进行图像中的文字区域的识别
     text_recs, tmp, img = text_detect(img)
     # 识别区域排列
     text_recs = sort_box(text_recs)
 
     result = crnnRec(img, text_recs, model, adjust=adjust)
-    return result, tmp, angle
+    return result, tmp, text_recs
 
 
 def sort_box(box):

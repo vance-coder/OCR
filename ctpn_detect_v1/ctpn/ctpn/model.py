@@ -5,17 +5,17 @@ import tensorflow as tf
 
 from .cfg import Config
 from .other import resize_im
-base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+# base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 
 
-sys.path.append(os.getcwd())
-from lib.fast_rcnn.config import cfg
-from lib.networks.factory import get_network
-from lib.fast_rcnn.test import test_ctpn
+# sys.path.append(os.getcwd())
+# from lib.fast_rcnn.config import cfg
+# from lib.networks.factory import get_network
+# from lib.fast_rcnn.test import test_ctpn
 
-# from ..lib.networks.factory import get_network
-# from ..lib.fast_rcnn.config import cfg
-# from..lib.fast_rcnn.test import test_ctpn
+from ..lib.networks.factory import get_network
+from ..lib.fast_rcnn.config import cfg
+from..lib.fast_rcnn.test import test_ctpn
 '''
 load network
 输入的名称为'Net_model'
