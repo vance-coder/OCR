@@ -2,7 +2,7 @@
 ##添加文本方向 检测模型，自动检测文字方向，0、90、180、270
 import sys
 from math import *
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 
 import cv2
 import pytesseract
@@ -14,7 +14,7 @@ from ctpn.text_detect import text_detect
 
 
 def img_to_string(image):
-    return pytesseract.image_to_string(image, config='-l eng+chi_sim --oem 3 --psm 7')
+    return pytesseract.image_to_string(image, config='-l eng+chi_sim --oem 3 --psm 7 -c load_system_dawg=0 -c load_freq_dawg=0')
 
 
 def crnnRec(im, text_recs, ocrMode='keras', adjust=False):
@@ -56,7 +56,6 @@ def crnnRec(im, text_recs, ocrMode='keras', adjust=False):
 
         # 图片的长宽如果小于30px，则按比例放大
         w, h = image.size
-        print(f'idx:{index}, w:{w}, h:{h}')
         factor = 30 / min(image.size)
         if factor > 1:
             image = image.resize((ceil(w * factor), ceil(h * factor)))
@@ -68,7 +67,7 @@ def crnnRec(im, text_recs, ocrMode='keras', adjust=False):
         # sim_pred = pytesseract.image_to_string(image, config='-l eng+chi_sim --oem 3 --psm 3')
         # results[index].append(sim_pred)
 
-    with ProcessPoolExecutor() as executor:
+    with ThreadPoolExecutor() as executor:
         res = [executor.submit(img_to_string, img) for img in images]
     for idx, r in enumerate(res):
         results[idx].append(r.result())
