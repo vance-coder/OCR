@@ -14,7 +14,8 @@ from ctpn.text_detect import text_detect
 
 
 def img_to_string(image):
-    return pytesseract.image_to_string(image, config='-l eng+chi_sim --oem 3 --psm 7 -c load_system_dawg=0 -c load_freq_dawg=0')
+    # eng+chi_sim
+    return pytesseract.image_to_string(image, config='-l eng --oem 3 --psm 7 -c load_system_dawg=0 -c load_freq_dawg=0')
 
 
 def crnnRec(im, text_recs, ocrMode='keras', adjust=False):
@@ -43,14 +44,21 @@ def crnnRec(im, text_recs, ocrMode='keras', adjust=False):
                    min(yDim - 2, rec[7] + ylength))
             pt4 = (rec[4], rec[5])
         else:
-            pt1 = (max(1, rec[0]), max(1, rec[1]))
-            pt2 = (rec[2], rec[3])
-            pt3 = (min(rec[6], xDim - 2), min(yDim - 2, rec[7]))
-            pt4 = (rec[4], rec[5])
+            # TODO 如何扩大两个像素
+#             pt1 = (max(1, rec[0]), max(1, rec[1]))
+#             pt2 = (rec[2], rec[3])
+#             pt3 = (min(rec[6], xDim - 2), min(yDim - 2, rec[7]))
+#             pt4 = (rec[4], rec[5])
+
+            pt1 = (max(1, rec[0]) - 2, max(1, rec[1]) - 2)
+            pt2 = (rec[2] + 2, rec[3] - 2)
+            pt3 = (min(rec[6], xDim - 2) + 2, min(yDim - 2, rec[7]) + 2)
+            pt4 = (rec[4] - 2, rec[5] + 2)
 
         degree = degrees(atan2(pt2[1] - pt1[1], pt2[0] - pt1[0]))  # 图像倾斜角度
-
+        print(f'{index}_{degree}')
         partImg = dumpRotateImage(im, degree, pt1, pt2, pt3, pt4)
+        
         # 根据ctpn进行识别出的文字区域，进行不同文字区域的crnn识别
         image = Image.fromarray(partImg).convert('L')
 
@@ -61,7 +69,7 @@ def crnnRec(im, text_recs, ocrMode='keras', adjust=False):
             image = image.resize((ceil(w * factor), ceil(h * factor)))
 
         images.append(image)
-        # image.save(f'./{index}.png')
+        image.save(f'../images/{index}_.png')
 
         # 进行识别出的文字识别
         # sim_pred = pytesseract.image_to_string(image, config='-l eng+chi_sim --oem 3 --psm 3')
@@ -76,6 +84,7 @@ def crnnRec(im, text_recs, ocrMode='keras', adjust=False):
 
 
 def dumpRotateImage(img, degree, pt1, pt2, pt3, pt4):
+    degree = 0
     height, width = img.shape[:2]
     heightNew = int(width * fabs(sin(radians(degree))) +
                     height * fabs(cos(radians(degree))))
@@ -108,20 +117,21 @@ def model(img, model='keras', adjust=False, detectAngle=False):
     @@param:detectAngle,是否检测文字朝向
     
     """
-    # angle = 0
-    # if detectAngle:
-    #     # 进行文字旋转方向检测，分为[0, 90, 180, 270]四种情况
-    #     angle = angle_detect(img=np.copy(img))  ##文字朝向检测
-    #     print('The angel of this character is:', angle)
-    #     im = Image.fromarray(img)
-    #     print('Rotate the array of this img!')
-    #     if angle == 90:
-    #         im = im.transpose(Image.ROTATE_90)
-    #     elif angle == 180:
-    #         im = im.transpose(Image.ROTATE_180)
-    #     elif angle == 270:
-    #         im = im.transpose(Image.ROTATE_270)
-    #     img = np.array(im)
+#     angle = 0
+#     if detectAngle:
+#         # 进行文字旋转方向检测，分为[0, 90, 180, 270]四种情况
+#         angle = angle_detect(img=np.copy(img))  ##文字朝向检测
+#         print('The angel of this character is:', angle)
+#         im = Image.fromarray(img)
+#         print('Rotate the array of this img!')
+#         if angle == 90:
+#             im = im.transpose(Image.ROTATE_90)
+#         elif angle == 180:
+#             im = im.transpose(Image.ROTATE_180)
+#         elif angle == 270:
+#             im = im.transpose(Image.ROTATE_270)
+#         img = np.array(im)
+        
     # 进行图像中的文字区域的识别
     text_recs, tmp, img = text_detect(img)
     # 识别区域排列
