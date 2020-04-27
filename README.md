@@ -13,6 +13,27 @@ pip install pytesseract
 # Then move these models to /usr/local/share/tessdata/
 chi_sim.traineddata (Simplified Chinese)
 chi_tra.traineddata (Traditional Chinese)
+
+# configure training env for MacOS
+# other OS please reffer to https://tesseract-ocr.github.io/tessdoc/Compiling.html#macos
+export HOMEBREW_NO_AUTO_UPDATE=true
+brew install libtool automake
+git clone https://gitee.com/vance-coder/tesseract.git
+cd tesseract
+./autogen.sh
+./configure
+make training
+sudo make install training-install
+```
+
+```markdown
+# 原始eng模型(该模型从tessdata_best仓库取)中提取lstm文件
+combine_tessdata -e ./model/eng.traineddata ./lstm/eng.lstm
+
+# 生成训练集
+tesstrain.sh --fonts_dir /System/Library/Fonts --lang eng --linedata_only --fontlist "Heiti SC" --save_box_tiff --noextract_font_properties --langdata_dir ./langdata --maxpages 100  --tessdata_dir ./models --output_dir ./
+# 开始训练 max_image_MB 
+lstmtraining --debug_interval 100 --max_image_MB 2000 --target_error_rate 0.05 --model_output ./checkpoint/ --continue_from ./lstm/eng.lstm --traineddata ./models/eng.traineddata --train_listfile ./eng.training_files.txt --max_iterations 10000 > basetrain.log
 ```
 
 ```markdown
