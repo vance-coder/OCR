@@ -32,8 +32,13 @@ combine_tessdata -e ./model/eng.traineddata ./lstm/eng.lstm
 
 # 生成训练集
 tesstrain.sh --fonts_dir /System/Library/Fonts --lang eng --linedata_only --fontlist "Heiti SC" --save_box_tiff --noextract_font_properties --langdata_dir ./langdata --maxpages 100  --tessdata_dir ./models --output_dir ./
-# 开始训练 max_image_MB 
-lstmtraining --debug_interval 100 --max_image_MB 2000 --target_error_rate 0.05 --model_output ./checkpoint/ --continue_from ./lstm/eng.lstm --traineddata ./models/eng.traineddata --train_listfile ./eng.training_files.txt --max_iterations 10000 > basetrain.log
+# 基于现有模型开始训练（fine tuning） 
+lstmtraining --debug_interval 100 --max_image_MB 2000 --target_error_rate 0.05 --learning_rate 0.002 --model_output ./checkpoint/ --continue_from ./lstm/eng.lstm --traineddata ./models/eng.traineddata --train_listfile ./eng.training_files.txt --max_iterations 5000 > basetrain.log
+# 基于上次训练开始继续训练（上次训练输出的是checkpoint，指向checkpoint即可）
+lstmtraining --debug_interval 100 --max_image_MB 2000 --target_error_rate 0.02 --learning_rate 0.002 --model_output ./checkpoint/ --continue_from ./checkpoint/_0.091_244_3200.checkpoint --traineddata ./models/eng.traineddata --train_listfile ./eng.training_files.txt --max_iterations 8000 > basetrain.log
+
+# 合并模型
+lstmtraining --stop_training  --continue_from ./checkpoint/_0.091_244_3200.checkpoint --traineddata ./models/eng.traineddata  --model_output ./eng.traineddata
 ```
 
 ```markdown
