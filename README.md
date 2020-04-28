@@ -1,4 +1,4 @@
-# OCR(cptn + tesseract)
+# OCR(ctpn + tesseract)
 
 MacOS下配置tesseract
 ```bash
