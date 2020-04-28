@@ -66,6 +66,14 @@ tesstrain.sh --fonts_dir /System/Library/Fonts --fontlist "Heiti SC"  --lang eng
 执行完后，那么在目录下，应该会生成以下文件
 ![tree2](./static/imgs/tree2.png)
 
+使用text2image工具生成训练集
+```markdown
+# 生成tif和box文件
+text2image --fonts_dir /System/Library/Fonts --font "Heiti SC"  --text ../langdata_lstm/eng/eng.training_text --outputbase ./out --max_pages 5
+
+# 生成lstmf文件
+tesseract --psm 6 out.tif out.box nobatch lstm.train
+```
 4. 开始训练(参数太多，不想一一解析了，只说关键的，因为这些都可以从文档找到，最底下有官方文档链接以及翻译版)
 - --target_error_rate 0.05 指定目标错误率，我理解就是对本次训练集的识别的错误率
 - --learning_rate 0.002  学习率，这应该就是梯度下降找最优解的那个学习率，默认只有0.001
@@ -88,7 +96,6 @@ lstmtraining --debug_interval 100 --max_image_MB 2000 --target_error_rate 0.02 -
 - --continue_from ./checkpoint/_0.003_244_3200.checkpoint  指定我需要合并模型的checkpoint文件
 - --traineddata ./models/eng.traineddata  指定现有的模型
 ```markdown
-# 合并模型
 lstmtraining --stop_training  --continue_from ./checkpoint/_0.003_244_3200.checkpoint --traineddata ./models/eng.traineddata  --model_output ./eng.traineddata
 ```
 
