@@ -17,6 +17,35 @@ def img_to_string(image):
     # eng+chi_sim
     return pytesseract.image_to_string(image, config='-l eng --oem 3 --psm 7 -c load_system_dawg=0 -c load_freq_dawg=0')
 
+def line_detect_possible(image):
+    gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+    edges = cv.Canny(gray, 50, 100, apertureSize = 3)
+    # minLineLength - 线段的最小长度. Line segments shorter than this are rejected.
+    # maxLineGap - 使程序识别线段为一条线的线段之间最大的空隙
+    lines = cv.HoughLinesP(edges, 1, np.pi/180, 50, 100, minLineLength = 50, maxLineGap = 1)
+    if lines is None:
+        return image
+    
+    h, w, _ = image.shape
+    
+    # 填充颜色计算
+    arr = image.flatten()
+    arr = [i for i in arr if i >= 80] # 灰度大于80的才计算（太黑的就是字体颜色了）
+    gray = sum(arr) / max(len(arr), 1) # 避免除0报错
+    
+    for line in lines:
+        x1, y1, x2, y2 = line[0] 
+        # 只处理水平线，避免识别错误线段必须大于长度的三分一以上
+        if (y2 - y1) > (x2 - x1) or (x2 - x1) < w/3:
+            continue
+        
+        # 画线条
+        #cv.line(image, (x1, y1), (x2, y2), (0, 0, 255), 2)
+        # 整条水平线都画颜色
+        cv.line(image, (0, y1), (w, y2), (gray, gray, gray), 2)
+    
+    return image
+
 
 def crnnRec(im, text_recs, ocrMode='keras', adjust=False):
     """
@@ -59,8 +88,11 @@ def crnnRec(im, text_recs, ocrMode='keras', adjust=False):
         print(f'{index}_{degree}')
         partImg = dumpRotateImage(im, degree, pt1, pt2, pt3, pt4)
         
+        # 去除干扰线
+        image = line_detect_possible(partImg)
+        
         # 根据ctpn进行识别出的文字区域，进行不同文字区域的crnn识别
-        image = Image.fromarray(partImg).convert('L')
+        image = Image.fromarray(image).convert('L')
 
         # 图片的长宽如果小于30px，则按比例放大
         w, h = image.size
