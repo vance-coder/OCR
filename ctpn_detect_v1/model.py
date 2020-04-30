@@ -18,11 +18,11 @@ def img_to_string(image):
     return pytesseract.image_to_string(image, config='-l eng --oem 3 --psm 7 -c load_system_dawg=0 -c load_freq_dawg=0')
 
 def line_detect_possible(image):
-    gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
-    edges = cv.Canny(gray, 50, 100, apertureSize = 3)
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    edges = cv2.Canny(gray, 50, 100, apertureSize = 3)
     # minLineLength - 线段的最小长度. Line segments shorter than this are rejected.
     # maxLineGap - 使程序识别线段为一条线的线段之间最大的空隙
-    lines = cv.HoughLinesP(edges, 1, np.pi/180, 50, 100, minLineLength = 50, maxLineGap = 1)
+    lines = cv2.HoughLinesP(edges, 1, np.pi/180, 50, 100, minLineLength = 50, maxLineGap = 1)
     if lines is None:
         return image
     
@@ -42,7 +42,7 @@ def line_detect_possible(image):
         # 画线条
         #cv.line(image, (x1, y1), (x2, y2), (0, 0, 255), 2)
         # 整条水平线都画颜色
-        cv.line(image, (0, y1), (w, y2), (gray, gray, gray), 2)
+        cv2.line(image, (0, y1), (w, y2), (gray, gray, gray), 2)
     
     return image
 
@@ -166,11 +166,34 @@ def model(img, model='keras', adjust=False, detectAngle=False):
         
     # 进行图像中的文字区域的识别
     text_recs, tmp, img = text_detect(img)
+    
+    # 过滤干扰项
+    w, h = img.size
+    text_recs = filter_box(text_recs, w, h)
+    
     # 识别区域排列
     text_recs = sort_box(text_recs)
 
     result = crnnRec(img, text_recs, model, adjust=adjust)
     return result, tmp, text_recs
+
+
+def filter_box(box, img_w, img_h):
+    """
+    过滤一些干扰的文本域、当前业务认为靠近图片边界而且文本域小于一定阈值的便是干扰项
+    """
+    border_dst = 5
+    size = 50
+    ret_box = []
+    
+    for row in box:
+        x1, y1, x2, y2, x3, y3, x4, y4 = row
+        if min(x1, x4, y1, y2) <= border_dst or max(x2, x3) + border_dst >= img_w or max(y3, y4) + border_dst >= img_h:
+            if max(x2 - x1, y4 - y1) <= size:
+                continue
+        ret_box.append(row)
+    return ret_box
+    
 
 
 def sort_box(box):
