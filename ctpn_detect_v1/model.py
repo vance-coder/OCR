@@ -13,9 +13,13 @@ from PIL import Image
 from ctpn.text_detect import text_detect
 
 
-def img_to_string(image):
+def img_to_data(image):
     # eng+chi_sim
-    return pytesseract.image_to_string(image, config='-l eng --oem 3 --psm 7 -c load_system_dawg=0 -c load_freq_dawg=0')
+    # return pytesseract.image_to_string(image, config='-l eng --oem 3 --psm 7 -c load_system_dawg=0 -c load_freq_dawg=0')
+    config_str = '-l eng --oem 3 --psm 7 -c load_system_dawg=0 -c load_freq_dawg=0'
+    df = pytesseract.image_to_data(image, output_type=pytesseract.Output.DATAFRAME, config=config_str)
+    df = df[df.conf>0][['conf', 'text']]
+    return df.to_dict('split').get('data')
 
 def line_detect_possible(image):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -101,14 +105,14 @@ def crnnRec(im, text_recs, ocrMode='keras', adjust=False):
             image = image.resize((ceil(w * factor), ceil(h * factor)))
 
         images.append(image)
-        image.save(f'../images/{index}_.png')
+#         image.save(f'../images/{index}_.png')
 
         # 进行识别出的文字识别
         # sim_pred = pytesseract.image_to_string(image, config='-l eng+chi_sim --oem 3 --psm 3')
         # results[index].append(sim_pred)
 
     with ThreadPoolExecutor() as executor:
-        res = [executor.submit(img_to_string, img) for img in images]
+        res = [executor.submit(img_to_data, img) for img in images]
     for idx, r in enumerate(res):
         results[idx].append(r.result())
 
@@ -168,7 +172,7 @@ def model(img, model='keras', adjust=False, detectAngle=False):
     text_recs, tmp, img = text_detect(img)
     
     # 过滤干扰项
-    w, h = img.size
+    w, h, _ = img.shape
     text_recs = filter_box(text_recs, w, h)
     
     # 识别区域排列
