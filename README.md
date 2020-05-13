@@ -1,5 +1,11 @@
 # OCR(ctpn + tesseract)
 
+ctpn网络做文本检测，ctpn网络出来的结果就是只有一行文字的小图片，之后对小图片进行了一些图像处理，如：图片摆正、直线检测去除干扰线、灰度化
+、图像增强等；最后将小图片用多线程方式批量传入tesseract做文字识别。
+
+tesseract采用的是4.0以上版本，因为该版本支持lstm神经网络准确率更高并且支持fine tune。
+
+
 MacOS下配置tesseract
 ```bash
 # install the latest version of tesseract for MacOS
@@ -98,6 +104,33 @@ lstmtraining --debug_interval 100 --max_image_MB 2000 --target_error_rate 0.02 -
 ```markdown
 lstmtraining --stop_training  --continue_from ./checkpoint/_0.003_244_3200.checkpoint --traineddata ./models/eng.traineddata  --model_output ./eng.traineddata
 ```
+
+6. 在现有模型中增加额外的字符集进行训练
+```markdown
+# 以chi_tra 加入简体中文为例
+# 先下载best仓库的繁体中文模型 chi_tra.traineddata，然后抽取模型权重
+combine_tessdata -e ./model/chi_tra.traineddata ./lstm/chi_tra.lstm
+
+# 修改langdata_lstm/chi_tra/chi_tra.training_text 文件，加入简体中文的文本集
+# 之后执行生成训练集的命令
+tesstrain.sh --fonts_dir /System/Library/Fonts --fontlist "Heiti SC"  --lang chi_tra --linedata_only --save_box_tiff 
+--noextract_font_properties --langdata_dir ./langdata_lstm --maxpages 100  --tessdata_dir ./models --output_dir ./
+# 上面的命令执行完毕后，会生成一个chi_tra目录，目录里面包含了chi_tra.traineddata、chi_tra.unicharset文件
+# 另外也会生成lstmf、box、tif等文件
+
+# 接下来开始训练模型
+# --continue_from 是上面best仓库的繁体中文模型抽取的权重
+# --old_traineddata 指定的模型是官方best仓库提供的原有模型
+# --traineddata 就是刚才上面这条命令生成chi_tra目录下新的模型
+lstmtraining --debug_interval -1 --max_image_MB 2000 --target_error_rate 0.05 --learning_rate 0.002 
+--model_output ./checkpoint/ --continue_from ./lstm/chi_tra.lstm --old_traineddata ./models/chi_tra.traineddata 
+--traineddata ./chi_tra/chi_tra.traineddata --train_listfile ./chi_tra.training_files.txt --max_iterations 2000 
+
+# 训练完毕后得到checkpoint文件，之后合成模型的时候是与新生成的./chi_tra/chi_tra.traineddata模型进行合并
+lstmtraining --stop_training  --continue_from ./checkpoint/_0.042_289_1400.checkpoint 
+--traineddata ./chi_tra/chi_tra.traineddata  --model_output ./chi_tra.traineddata
+```
+
 
 
 参考资料：
