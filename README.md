@@ -3,16 +3,32 @@
 基于神经网络的不定长文字识别简单讲主要包括两部分，这两部分分别由不同的网络模型去实现：
 1. text detection 文本检测（给一张图片，从图片中找出文本区域）；
 
-text detection 常用网络模型（本项目目前采用的是CTPN）
-![text_detection_ret](./static/imgs/text_detection_ret.png)
+text detection 目前采用的是CTPN模型，结构如下：
+![text_detection_ret](./static/imgs/ctpn.png)
+
+- 首先输入一张图片由VGG提取特征，获得feature map，
+之后在用conv5上做再做特征提取再获得一个feature map；
+- 再将这个feature map进行Reshape；
+- 然后把数据流输入BLSTM，学习每一行的序列特征。
+- LSTM输出再经Reshape恢复形状，该特征既包含空间特征，也包含了LSTM学习到的序列特征；
+- 然后经过FC卷积层，提取特征；
+- 最后经过类似Faster R-CNN的RPN网络，获得text proposals（文本选区）。
+
 
 2. text recognition 文本识别 （将文本区域的文字识别出来）。
 
 本项目在文字识别这块使用的是tesseract4.0以上版本中的LSTM网络（具体好像是CNN + LSTM +CTC，类似于CRNN，CRNN结构如下图）。
 ![text_detection_ret](./static/imgs/CRNN_model.png)
 
+- 输入图像还是由VGG卷积神经网络进行特征提取获得feature map；
+- 再将这个feature map进行Reshape；
+- 然后把数据流输入BLSTM，学习每一行的序列特征
+- LSTM输出再经Reshape恢复形状，该特征既包含空间特征，也包含了LSTM学习到的序列特征；
+- 然后经过FC卷积层，提取特征；
+- 最后使用CTC损失，把系列标签分布转换成最终的标签序列。
 
-具体流程为：
+
+具体编码流程为（ctpn、tesseract目前都是采用已有的包）：
 1. 将一张大图片传入ctpn网络做文本检测，ctpn网络出来的结果就是只有很多只包含一行文字的小图片；
 2. 之后对小图片进行了一些图像处理，如：图片摆正、直线检测去除干扰线、灰度化
 、图像增强等；
