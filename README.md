@@ -1,10 +1,32 @@
 # OCR(ctpn + tesseract)
 
-ctpn网络做文本检测，ctpn网络出来的结果就是只有一行文字的小图片，之后对小图片进行了一些图像处理，如：图片摆正、直线检测去除干扰线、灰度化
-、图像增强等；最后将小图片用多线程方式批量传入tesseract做文字识别。
+基于神经网络的不定长文字识别简单讲主要包括两部分，这两部分分别由不同的网络模型去实现：
+1. text detection 文本检测（给一张图片，从图片中找出文本区域）；
 
-tesseract采用的是4.0以上版本，因为该版本支持lstm神经网络准确率更高并且支持fine tune。
+text detection 常用网络模型（本项目目前采用的是CTPN）
+![text_detection_ret](./static/imgs/text_detection_ret.png)
 
+2. text recognition 文本识别 （将文本区域的文字识别出来）。
+
+本项目在文字识别这块使用的是tesseract4.0以上版本中的LSTM网络（具体好像是CNN + LSTM +CTC，类似于CRNN，CRNN结构如下图）。
+![text_detection_ret](./static/imgs/CRNN_model.png)
+
+
+具体流程为：
+1. 将一张大图片传入ctpn网络做文本检测，ctpn网络出来的结果就是只有很多只包含一行文字的小图片；
+2. 之后对小图片进行了一些图像处理，如：图片摆正、直线检测去除干扰线、灰度化
+、图像增强等；
+3. 最后将小图片用批量传入tesseract做文字识别。
+
+
+Windows下环境配置
+```markdown
+1、安装tesseract 4.0 +，并配置环境变量
+下载页面：https://github.com/UB-Mannheim/tesseract/wiki
+
+2、安装相关Python库
+pip3 install pytesseract tensorflow==1.14 keras torch pillow pandas numpy
+```
 
 MacOS下配置tesseract
 ```bash
@@ -134,6 +156,8 @@ lstmtraining --stop_training  --continue_from ./checkpoint/_0.042_289_1400.check
 
 
 参考资料：
+
+[文字识别方法整理 - 知乎](https://zhuanlan.zhihu.com/p/65707543)
 
 [Tesseract 4.0 LSTM训练超详细教程 - 知乎](https://zhuanlan.zhihu.com/p/58366201)
 
